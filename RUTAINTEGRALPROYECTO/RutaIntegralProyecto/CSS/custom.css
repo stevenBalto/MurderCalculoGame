@@ -1,0 +1,142 @@
+/* ===================== */
+/* CUSTOM CSS - Animaciones y efectos especiales */
+/* Solo lo que Tailwind no puede hacer */
+/* ===================== */
+
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Fuente Retro */
+.font-retro {
+    font-family: 'Press Start 2P', cursive;
+}
+
+/* ===================== */
+/* FONDO ESTRELLADO ANIMADO */
+/* ===================== */
+
+.starfield-bg {
+    background-color: #000;
+    background-image: url('../assets/img/pixelart_starfield.png');
+    background-repeat: repeat;
+    background-size: 200px;
+    animation: moveStars 80s linear infinite;
+    image-rendering: pixelated;
+}
+
+@keyframes moveStars {
+    from { background-position: 0 0; }
+    to { background-position: -320px -320px; }
+}
+
+/* ===================== */
+/* EFECTOS GLOW / NEÓN */
+/* ===================== */
+
+.text-glow {
+    text-shadow: 
+        0 0 10px #00e6ff,
+        0 0 20px #00e6ff,
+        0 0 30px #00c6ff,
+        4px 4px 0 #000;
+}
+
+.box-glow {
+    box-shadow: 0 0 30px rgba(0, 198, 255, 0.4);
+}
+
+.box-glow-strong {
+    box-shadow: 0 0 50px rgba(0, 198, 255, 0.6);
+}
+
+/* ===================== */
+/* BOTONES RETRO */
+/* ===================== */
+
+.btn-retro {
+    font-family: 'Press Start 2P', cursive;
+    border: 3px solid #fff;
+    background-color: #000;
+    color: #fff;
+    box-shadow: 5px 5px 0px #00c6ff;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.btn-retro:hover {
+    background-color: #00c6ff;
+    color: #000;
+    transform: translate(2px, 2px);
+    box-shadow: 3px 3px 0px #fff;
+}
+
+.btn-retro:active {
+    transform: translate(4px, 4px);
+    box-shadow: 1px 1px 0px #fff;
+}
+
+/* ===================== */
+/* PLATAFORMA DE PERSONAJE */
+/* ===================== */
+
+.character-platform {
+    background: radial-gradient(circle, rgba(0, 198, 255, 0.3), transparent);
+    border: 3px solid rgba(0, 198, 255, 0.5);
+    box-shadow: 0 0 30px rgba(0, 198, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+.character-platform:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 50px rgba(0, 198, 255, 0.6);
+}
+
+/* ===================== */
+/* ANIMACIÓN PULSE */
+/* ===================== */
+
+.animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { 
+        opacity: 0.6; 
+        transform: scale(1); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1.05); 
+    }
+}
+
+/* ===================== */
+/* MODAL */
+/* ===================== */
+
+.modal-overlay {
+    backdrop-filter: blur(5px);
+}
+
+/* ===================== */
+/* CARDS DE PERSONAJES */
+/* ===================== */
+
+.character-card {
+    transition: all 0.3s ease;
+}
+
+.character-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 198, 255, 0.3);
+}
+
+.character-card.selected {
+    border-color: #00e6ff !important;
+    background: rgba(0, 198, 255, 0.2) !important;
+    box-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
+}

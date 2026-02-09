@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tile Viewer</title>
+    <style>
+        body { background: #222; color: #fff; font-family: monospace; margin: 20px; }
+        #info { position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.9); padding: 15px; border: 2px solid #0ff; z-index: 10; min-width: 200px; }
+        #preview { image-rendering: pixelated; border: 2px solid #0ff; }
+        canvas { image-rendering: pixelated; cursor: crosshair; }
+        .tiles { display: flex; flex-wrap: wrap; gap: 1px; background: #333; padding: 5px; }
+        .tile { width: 48px; height: 48px; image-rendering: pixelated; cursor: pointer; border: 1px solid #444; position: relative; }
+        .tile:hover { border-color: #0ff; z-index: 5; transform: scale(1.5); }
+        .tile span { font-size: 8px; color: #ff0; position: absolute; bottom: 0; left: 0; background: rgba(0,0,0,0.7); padding: 1px 2px; }
+        h2 { color: #0ff; }
+    </style>
+</head>
+<body>
+    <h1>Kenney Roguelike Modern City - Tile Viewer</h1>
+    <div id="info">
+        <p>Hover over a tile to see its ID</p>
+        <p>Tile: <strong id="tileId">-</strong></p>
+        <p>Row: <strong id="tileRow">-</strong> Col: <strong id="tileCol">-</strong></p>
+        <p>TMX GID: <strong id="tileGid">-</strong></p>
+        <canvas id="preview" width="64" height="64"></canvas>
+    </div>
+    <div id="container"></div>
+
+    <script>
+        const TILE_SIZE = 16;
+        const MARGIN = 1;
+        const img = new Image();
+        img.src = 'assets/img/tileset/Spritesheet/roguelikeSheet_transparent.png';
+        
+        img.onload = () => {
+            const cols = Math.floor(img.width / (TILE_SIZE + MARGIN));
+            const rows = Math.floor(img.height / (TILE_SIZE + MARGIN));
+            document.getElementById('container').innerHTML = `<h2>Spritesheet: ${img.width}x${img.height} | ${cols} cols x ${rows} rows | Total: ${cols*rows} tiles</h2>`;
+            
+            const tilesDiv = document.createElement('div');
+            tilesDiv.className = 'tiles';
+            
+            const previewCtx = document.getElementById('preview').getContext('2d');
+            previewCtx.imageSmoothingEnabled = false;
+            
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const tileIndex = r * cols + c;
+                    const srcX = c * (TILE_SIZE + MARGIN);
+                    const srcY = r * (TILE_SIZE + MARGIN);
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 48;
+                    canvas.height = 48;
+                    canvas.className = 'tile';
+                    canvas.dataset.index = tileIndex;
+                    canvas.dataset.row = r;
+                    canvas.dataset.col = c;
+                    canvas.dataset.gid = tileIndex + 1;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(img, srcX, srcY, TILE_SIZE, TILE_SIZE, 0, 0, 48, 48);
+                    
+                    const span = document.createElement('span');
+                    span.textContent = tileIndex;
+                    canvas.appendChild = null; // can't append to canvas
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.style.position = 'relative';
+                    wrapper.style.display = 'inline-block';
+                    wrapper.appendChild(canvas);
+                    const label = document.createElement('div');
+                    label.style.cssText = 'font-size:8px;color:#ff0;text-align:center;background:#000;';
+                    label.textContent = tileIndex;
+                    wrapper.appendChild(label);
+                    
+                    canvas.addEventListener('mouseover', () => {
+                        document.getElementById('tileId').textContent = tileIndex;
+                        document.getElementById('tileRow').textContent = r;
+                        document.getElementById('tileCol').textContent = c;
+                        document.getElementById('tileGid').textContent = tileIndex + 1;
+                        previewCtx.clearRect(0,0,64,64);
+                        previewCtx.drawImage(img, srcX, srcY, TILE_SIZE, TILE_SIZE, 0, 0, 64, 64);
+                    });
+                    
+                    tilesDiv.appendChild(wrapper);
+                }
+            }
+            
+            document.getElementById('container').appendChild(tilesDiv);
+        };
+    </script>
+</body>
+</html>

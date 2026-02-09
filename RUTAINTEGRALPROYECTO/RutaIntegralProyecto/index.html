@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Murder Cálculo</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Font Retro -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  
+  <!-- Estilos custom (solo animaciones) -->
+  <link rel="stylesheet" href="CSS/custom.css" />
+</head>
+
+<body class="starfield-bg min-h-screen text-white overflow-hidden">
+  
+  <main class="min-h-screen flex flex-col">
+    
+    <!-- Header con título -->
+    <header class="text-center py-6 z-10">
+      <h1 class="font-retro text-3xl md:text-4xl text-cyan-400 text-glow">
+        Murder Cálculo
+      </h1>
+      <p class="text-gray-400 text-xs mt-2">Atrapa al asesino. Resuelve los acertijos.</p>
+    </header>
+
+    <!-- Área principal de selección -->
+    <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 px-6 py-4 z-10 items-center">
+      
+      <!-- Panel izquierdo - Info del personaje -->
+      <div class="flex justify-center md:justify-end">
+        <div class="bg-black/70 border-2 border-cyan-500 rounded-xl p-6 max-w-xs box-glow">
+          <h3 id="characterName" class="font-retro text-sm md:text-base text-cyan-400 mb-4 text-center leading-relaxed">
+            Estudiante Básico
+          </h3>
+          <p id="characterDesc" class="text-gray-300 text-center text-sm leading-relaxed">
+            Personaje ideal para comenzar tu aventura matemática
+          </p>
+        </div>
+      </div>
+
+      <!-- Área central - Personaje -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="character-platform w-44 h-44 md:w-52 md:h-52 rounded-full flex items-center justify-center cursor-pointer">
+          <div id="selectedCharacter" class="w-32 h-32 md:w-40 md:h-40 bg-black/50 rounded-full flex items-center justify-center overflow-hidden">
+            <span class="character-avatar w-full h-full flex items-center justify-center">
+              <img src="assets/img/personajes/Male person/PNG/Poses/character_malePerson_idle.png" alt="Personaje" class="max-w-full max-h-full object-contain scale-110">
+            </span>
+          </div>
+        </div>
+        
+        <!-- Indicador de clic -->
+        <div class="mt-6 animate-pulse-glow">
+          <span class="font-retro text-xs text-cyan-400">Toca para elegir personaje</span>
+        </div>
+      </div>
+
+      <!-- Panel derecho - Botones -->
+      <div class="flex justify-center md:justify-start">
+        <div class="flex flex-col gap-5 w-full max-w-xs">
+          <button id="btnStart" class="btn-retro py-4 px-8 text-sm font-retro uppercase">
+            Investigar
+          </button>
+          <button id="btnInfo" class="btn-retro py-4 px-8 text-sm font-retro uppercase">
+            Información
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal de selección de personajes -->
+    <div id="characterModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-50 modal-overlay">
+      <div class="bg-gradient-to-br from-blue-900 to-blue-950 border-4 border-cyan-500 rounded-2xl w-11/12 max-w-3xl max-h-[90vh] overflow-y-auto box-glow-strong">
+        
+        <!-- Header del modal -->
+        <div class="flex justify-between items-center p-6 border-b-2 border-cyan-500">
+          <h2 class="font-retro text-base md:text-lg text-cyan-400">
+            Selecciona tu Personaje
+          </h2>
+          <button id="closeModal" class="text-3xl text-white hover:text-red-500 transition-colors">
+            &times;
+          </button>
+        </div>
+        
+        <!-- Grid de personajes -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 p-6">
+          
+          <div class="character-card bg-black/80 border-2 border-gray-600 rounded-xl p-4 text-center cursor-pointer" data-character="estudiante">
+            <div class="h-20 mb-2 flex items-center justify-center">
+              <img src="assets/img/personajes/Male person/PNG/Poses/character_malePerson_idle.png" alt="Estudiante" class="h-full object-contain">
+            </div>
+            <h4 class="font-retro text-xs text-cyan-400 mb-2 leading-tight">Estudiante Básico</h4>
+            <p class="text-gray-400 text-xs">Ideal para empezar</p>
+          </div>
+          
+          <div class="character-card bg-black/80 border-2 border-gray-600 rounded-xl p-4 text-center cursor-pointer" data-character="matematico">
+            <div class="h-20 mb-2 flex items-center justify-center">
+              <img src="assets/img/personajes/Female person/PNG/Poses/character_femalePerson_idle.png" alt="Matemático" class="h-full object-contain">
+            </div>
+            <h4 class="font-retro text-xs text-cyan-400 mb-2 leading-tight">Matemático</h4>
+            <p class="text-gray-400 text-xs">Experto en cálculos</p>
+          </div>
+          
+          <div class="character-card bg-black/80 border-2 border-gray-600 rounded-xl p-4 text-center cursor-pointer" data-character="ingeniero">
+            <div class="h-20 mb-2 flex items-center justify-center">
+              <img src="assets/img/personajes/Male adventurer/PNG/Poses/character_maleAdventurer_idle.png" alt="Ingeniero" class="h-full object-contain">
+            </div>
+            <h4 class="font-retro text-xs text-cyan-400 mb-2 leading-tight">Ingeniero</h4>
+            <p class="text-gray-400 text-xs">Resuelve problemas</p>
+          </div>
+          
+          <div class="character-card bg-black/80 border-2 border-gray-600 rounded-xl p-4 text-center cursor-pointer" data-character="cientifico">
+            <div class="h-20 mb-2 flex items-center justify-center">
+              <img src="assets/img/personajes/Female adventurer/PNG/Poses/character_femaleAdventurer_idle.png" alt="Científico" class="h-full object-contain">
+            </div>
+            <h4 class="font-retro text-xs text-cyan-400 mb-2 leading-tight">Científico</h4>
+            <p class="text-gray-400 text-xs">Maestro de fórmulas</p>
+          </div>
+          
+          <div class="character-card bg-black/80 border-2 border-gray-600 rounded-xl p-4 text-center cursor-pointer" data-character="genio">
+            <div class="h-20 mb-2 flex items-center justify-center">
+              <img src="assets/img/personajes/Zombie/PNG/Poses/character_zombie_idle.png" alt="Genio" class="h-full object-contain">
+            </div>
+            <h4 class="font-retro text-xs text-cyan-400 mb-2 leading-tight">Genio Matemático</h4>
+            <p class="text-gray-400 text-xs">El maestro supremo</p>
+          </div>
+          
+          <div class="character-card bg-black/80 border-2 border-gray-600 rounded-xl p-4 text-center cursor-pointer" data-character="robot">
+            <div class="h-20 mb-2 flex items-center justify-center">
+              <img src="assets/img/personajes/Robot/PNG/Poses/character_robot_idle.png" alt="Robot" class="h-full object-contain">
+            </div>
+            <h4 class="font-retro text-xs text-cyan-400 mb-2 leading-tight">IA Calculator</h4>
+            <p class="text-gray-400 text-xs">Inteligencia artificial</p>
+          </div>
+          
+        </div>
+        
+        <!-- Footer del modal -->
+        <div class="p-6 border-t-2 border-cyan-500 text-center">
+          <button id="confirmSelection" class="btn-retro py-4 px-10 text-sm opacity-50 pointer-events-none">
+            SELECCIONAR
+          </button>
+        </div>
+        
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="JS/main.js"></script>
+</body>
+</html>
+S
