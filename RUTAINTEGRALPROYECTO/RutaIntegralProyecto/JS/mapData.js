@@ -522,7 +522,7 @@ const RIDDLES = [
             { label: 'd', text: "f'(x) = 6x" }
         ],
         solved: false,
-        clueText: '🔍 Pista 1: La víctima escribió "el asesino siempre lleva guantes negros".'
+        clueText: '🔍 Pista 1: Encuentras una nota clara: “La persona que me atacó usaba guantes negros".'
     },
     {
         id: 2,
@@ -537,7 +537,7 @@ const RIDDLES = [
             { label: 'd', text: '2x + C' }
         ],
         solved: false,
-        clueText: '🔍 Pista 2: En la nota dice: "busca al que trabaja de noche cerca del hospital".'
+        clueText: '🔍 Pista 2: La víctima dejó escrito: “Solo alguien que trabaja de noche cerca del hospital podría hacerlo".'
     },
     {
         id: 3,
@@ -552,7 +552,7 @@ const RIDDLES = [
             { label: 'd', text: 'No existe' }
         ],
         solved: false,
-        clueText: '🔍 Pista 3: La víctima anotó: "el arma fue un objeto pesado, no un cuchillo".'
+        clueText: '🔍 Pista 3: La víctima escribió: “No fue un cuchillo, fue algo pesado".'
     },
     {
         id: 4,
@@ -567,7 +567,7 @@ const RIDDLES = [
             { label: 'd', text: "f'(x) = tan(x)" }
         ],
         solved: false,
-        clueText: '🔍 Pista 4: Encontraste un recibo: "compra de soga - ferretería, 10:45 PM".'
+        clueText: '🔍 Pista 4: Encuentras un recibo real: “Compra de soga – ferretería – 10:45 p. m.".'
     },
     {
         id: 5,
@@ -582,7 +582,8 @@ const RIDDLES = [
             { label: 'd', text: '4' }
         ],
         solved: false,
-        clueText: '🔍 Pista 5: La víctima escribió "nos vemos en la casa abandonada a medianoche".'
+        clueText: '🩸 Pista 5: Nota corta: “Carlos es el único que sabía todo”.'
+
     },
     {
         id: 6,
@@ -597,7 +598,7 @@ const RIDDLES = [
             { label: 'd', text: "f''(x) = 6" }
         ],
         solved: false,
-        clueText: '🔍 Pista 6: Última nota: "Carlos Mendez me citó aquí... tengo miedo".'
+        clueText: '🔍 Pista 6: La nota final dice: “Carlos Méndez me citó aquí… tengo miedo".'
     }
 ];
 

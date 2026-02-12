@@ -486,7 +486,6 @@ const keys = {};
 
 window.addEventListener('keydown', (e) => {
     keys[e.key] = true;
-
     // Manejar input de acertijos
     if (gameState.showingFinale || gameState.gameComplete) {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -501,7 +500,6 @@ window.addEventListener('keydown', (e) => {
         e.preventDefault();
         return;
     }
-
     if (gameState.showingResult) {
         if (e.key === 'Enter' || e.key === ' ') {
             closeResult();
@@ -509,7 +507,6 @@ window.addEventListener('keydown', (e) => {
         e.preventDefault();
         return;
     }
-
     if (gameState.activeRiddle !== null) {
         // Seleccionar opción con teclas 1-4 o a-d
         if (e.key === '1' || e.key === 'a' || e.key === 'A') selectRiddleOption(0);
@@ -519,27 +516,30 @@ window.addEventListener('keydown', (e) => {
         e.preventDefault();
         return;
     }
-
     e.preventDefault();
-
-    // Interacción con E (hablar / entrar / usar)
+    
+    // ✨ Interacción con E (hablar / entrar / usar) - MODIFICADO
     if (e.key === 'e' || e.key === 'E') {
+        // Primero, intentar interactuar con NPC cercano (sin importar dirección)
+        if (tryInteractWithNearbyNPC()) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Si no hay NPC cerca, usar la interacción direccional normal (puertas, etc.)
         const front = getFrontTile(player.x, player.y, player.direction);
         handleInteraction(front.x, front.y);
         e.preventDefault();
         return;
     }
-
+    
     if (gameState.showingDialogue) {
-    if (e.key === 'Enter' || e.key === 'b' || e.key === 'B') {
-        closeDialogue();
+        if (e.key === 'Enter' || e.key === 'b' || e.key === 'B') {
+            closeDialogue();
+        }
+        e.preventDefault();
+        return;
     }
-    e.preventDefault();
-    return;
-}
-sa
-
-
 });
 
 function getFrontTile(px, py, dir) {
@@ -551,6 +551,42 @@ function getFrontTile(px, py, dir) {
     return { x, y };
 }
 
+// ✨ NUEVA FUNCIÓN - Buscar e interactuar con NPC cercano
+function tryInteractWithNearbyNPC() {
+    if (!window.npcs) return false;
+    
+    const px = Math.round(player.x);
+    const py = Math.round(player.y);
+    
+    // Buscar NPC en las 8 casillas adyacentes + la casilla actual
+    const searchOffsets = [
+        {dx: 0, dy: 0},   // misma casilla
+        {dx: -1, dy: 0},  // izquierda
+        {dx: 1, dy: 0},   // derecha
+        {dx: 0, dy: -1},  // arriba
+        {dx: 0, dy: 1},   // abajo
+        {dx: -1, dy: -1}, // diagonal superior izquierda
+        {dx: 1, dy: -1},  // diagonal superior derecha
+        {dx: -1, dy: 1},  // diagonal inferior izquierda
+        {dx: 1, dy: 1}    // diagonal inferior derecha
+    ];
+    
+    // Buscar NPC en cada posición
+    for (const offset of searchOffsets) {
+        const checkX = px + offset.dx;
+        const checkY = py + offset.dy;
+        
+        for (const npc of window.npcs) {
+            if (npc.x === checkX && npc.y === checkY) {
+                // ¡Encontramos un NPC cercano!
+                handleNpcInteraction(npc);
+                return true; // Interacción exitosa
+            }
+        }
+    }
+    
+    return false; // No hay NPCs cerca
+}
 
 window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
@@ -1492,7 +1528,7 @@ function drawTile(tileId, screenX, screenY) {
         // Cartel "Se Busca"
         ctx.fillStyle = '#e8d8a0';
         ctx.fillRect(screenX + 4, screenY + 3, tileSize - 8, tileSize - 6);
-        // Borde
+        // Bordesb
         ctx.strokeStyle = '#8a7a50';
         ctx.lineWidth = 1;
         ctx.strokeRect(screenX + 4, screenY + 3, tileSize - 8, tileSize - 6);

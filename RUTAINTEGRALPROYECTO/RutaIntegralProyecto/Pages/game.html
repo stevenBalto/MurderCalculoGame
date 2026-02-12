@@ -22,6 +22,7 @@
             width: 100vw;
             height: 100vh;
             cursor: crosshair;
+            font-family: 'Press Start 2P', monospace;
         }
 
         canvas {
@@ -35,10 +36,7 @@
         /* Pantalla de carga */
         #loadingScreen {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             background: #0a0a1a;
             display: flex;
             flex-direction: column;
@@ -54,7 +52,6 @@
         }
 
         #loadingScreen h1 {
-            font-family: 'Press Start 2P', monospace;
             color: #00e6ff;
             font-size: 1.5rem;
             margin-bottom: 30px;
@@ -65,7 +62,7 @@
             width: 300px;
             height: 20px;
             border: 2px solid #00e6ff;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
         }
 
         .loading-bar-fill {
@@ -76,10 +73,74 @@
         }
 
         #loadingText {
-            font-family: 'Press Start 2P', monospace;
             color: #888;
             font-size: 0.6rem;
             margin-top: 15px;
+        }
+
+        /* ============================
+           PANTALLITA DE AYUDA / TUTORIAL
+           ============================ */
+        #tutorialOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        #tutorialBox {
+            width: min(720px, 94vw);
+            background: rgba(10, 10, 26, 0.96);
+            border: 2px solid #00e6ff;
+            box-shadow: 0 0 30px rgba(0, 230, 255, 0.25);
+            padding: 18px;
+        }
+
+        #tutorialTitle {
+            color: #00e6ff;
+            font-size: 0.85rem;
+            text-shadow: 0 0 12px rgba(0, 230, 255, 0.6);
+            margin-bottom: 12px;
+        }
+
+        #tutorialText {
+            color: #eaeaea;
+            font-size: 0.62rem;
+            line-height: 1.8;
+            margin-bottom: 14px;
+        }
+
+        #tutorialHint {
+            color: #aaa;
+            font-size: 0.55rem;
+            margin-bottom: 14px;
+        }
+
+        #tutorialActions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .tutorialBtn {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.55rem;
+            padding: 10px 12px;
+            border: 2px solid #00e6ff;
+            background: rgba(0, 230, 255, 0.12);
+            color: #00e6ff;
+            cursor: pointer;
+        }
+
+        .tutorialBtn.secondary {
+            border-color: #888;
+            color: #ddd;
+            background: rgba(255, 255, 255, 0.06);
         }
     </style>
 </head>
@@ -95,12 +156,82 @@
         <p id="loadingText">Cargando ciudad...</p>
     </div>
 
+    <!-- PANTALLITA DE AYUDA -->
+    <div id="tutorialOverlay">
+        <div id="tutorialBox">
+            <div id="tutorialTitle">👤 Don Roberto dice:</div>
+
+            <div id="tutorialText">
+                Bienvenido a <b>Murder Cálculo</b>.<br><br>
+
+                • Explorá la ciudad usando el teclado.<br>
+                • Interactuá con personajes y eventos.<br>
+                • Resolvé retos de cálculo para avanzar.<br>
+                • Si fallás, podés intentarlo de nuevo.<br><br>
+
+                El objetivo es completar la aventura resolviendo correctamente los desafíos.
+            </div>
+
+            <div id="tutorialHint">
+                Tip: Presioná <b>H</b> para ver esta ayuda otra vez.
+            </div>
+
+            <div id="tutorialActions">
+                <button class="tutorialBtn secondary" id="tutorialLaterBtn">VER LUEGO</button>
+                <button class="tutorialBtn" id="tutorialOkBtn">ENTENDIDO</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Canvas del juego -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Scripts -->
+    <!-- Scripts del juego -->
     <script src="../JS/mapData.js"></script>
     <script src="../JS/engine.js"></script>
+
+    <!-- JS MINIMO PARA CONTROLAR LA PANTALLITA -->
+    <script>
+        (function () {
+            const overlay = document.getElementById('tutorialOverlay');
+            const btnOk = document.getElementById('tutorialOkBtn');
+            const btnLater = document.getElementById('tutorialLaterBtn');
+
+            function openTutorial() {
+                overlay.style.display = 'flex';
+            }
+
+            function closeTutorial() {
+                overlay.style.display = 'none';
+            }
+
+            // Mostrar al iniciar
+            window.addEventListener('load', () => {
+                openTutorial();
+            });
+
+            // Botones
+            btnOk.addEventListener('click', closeTutorial);
+            btnLater.addEventListener('click', closeTutorial);
+
+            // ESC para cerrar
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeTutorial();
+            });
+
+            // H para volver a abrir
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'h' || e.key === 'H') {
+                    openTutorial();
+                }
+            });
+
+            // Click afuera para cerrar
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeTutorial();
+            });
+        })();
+    </script>
 
 </body>
 
