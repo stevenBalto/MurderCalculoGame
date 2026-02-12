@@ -674,6 +674,8 @@ const gameState = {
     showingAccusation: false,
     accusationResult: null,   // null = no respondió, true = correcto, false = incorrecto
     accusationSpot: null,     // {x, y} posición del marcador de acusación
+    _accusationCards: null,   // posiciones de tarjetas para click detection
+    _accusationHover: -1,     // índice de tarjeta bajo el mouse
 
     // Animación de victoria
     showingVictory: false,

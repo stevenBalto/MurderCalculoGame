@@ -639,6 +639,23 @@ window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
+// Hover en tarjetas de acusación
+canvas.addEventListener('mousemove', (e) => {
+    if (!gameState.showingAccusation || gameState.accusationResult !== null) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+    gameState._accusationHover = -1;
+    if (gameState._accusationCards) {
+        for (const card of gameState._accusationCards) {
+            if (mx >= card.x && mx <= card.x + card.w && my >= card.y && my <= card.y + card.h) {
+                gameState._accusationHover = card.index;
+                break;
+            }
+        }
+    }
+});
+
 // Click/tap para seleccionar opciones del acertijo
 canvas.addEventListener('click', (e) => {
     if (gameState.showingVictory) {
@@ -653,21 +670,17 @@ canvas.addEventListener('click', (e) => {
             closeAccusationResult();
             return;
         }
-        // Click en opciones de acusación
+        if (gameState.accusationResult !== null) return;
+        // Click en tarjetas de sospechosos
         const rect2 = canvas.getBoundingClientRect();
-        const cx2 = e.clientX - rect2.left;
-        const cy2 = e.clientY - rect2.top;
-        const cw2 = canvas.width;
-        const ch2 = canvas.height;
-        const pw2 = Math.min(620, cw2 - 40);
-        const px2 = (cw2 - pw2) / 2;
-        const optStart2 = ch2 / 2 - 10 - 420 / 2 + 225;
-        const optH2 = 48;
-        for (let i = 0; i < 3; i++) {
-            const oy2 = optStart2 + i * optH2;
-            if (cx2 >= px2 + 20 && cx2 <= px2 + pw2 - 20 && cy2 >= oy2 && cy2 <= oy2 + optH2 - 5) {
-                selectAccusationOption(i);
-                break;
+        const cx2 = (e.clientX - rect2.left) * (canvas.width / rect2.width);
+        const cy2 = (e.clientY - rect2.top) * (canvas.height / rect2.height);
+        if (gameState._accusationCards) {
+            for (const card of gameState._accusationCards) {
+                if (cx2 >= card.x && cx2 <= card.x + card.w && cy2 >= card.y && cy2 <= card.y + card.h) {
+                    selectAccusationOption(card.index);
+                    break;
+                }
             }
         }
         return;
@@ -991,130 +1004,366 @@ function drawAccusationUI() {
     const ch = canvas.height;
 
     // Overlay oscuro
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.92)';
     ctx.fillRect(0, 0, cw, ch);
 
-    const panelW = Math.min(620, cw - 40);
-    const panelH = 420;
+    const panelW = Math.min(700, cw - 20);
+    const panelH = Math.min(500, ch - 20);
     const panelX = (cw - panelW) / 2;
-    const panelY = (ch - panelH) / 2 - 10;
+    const panelY = (ch - panelH) / 2;
 
     // Fondo del panel
-    ctx.fillStyle = '#1a1a2e';
+    ctx.fillStyle = '#0d0d1a';
     ctx.fillRect(panelX, panelY, panelW, panelH);
     ctx.strokeStyle = '#ff4444';
     ctx.lineWidth = 3;
     ctx.strokeRect(panelX, panelY, panelW, panelH);
 
-    // Si ya eligió y fue CORRECTO (breve feedback antes de la animación)
+    // === CORRECTO ===
     if (gameState.accusationResult === true) {
         ctx.font = '40px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('✅', cw / 2, panelY + panelH / 2 - 30);
-
         const correctPulse = (Math.sin(Date.now() / 150) + 1) / 2;
         ctx.font = '16px "Press Start 2P", monospace';
         ctx.fillStyle = `rgb(0, ${200 + Math.floor(correctPulse * 55)}, ${100 + Math.floor(correctPulse * 55)})`;
         ctx.fillText('¡CORRECTO!', cw / 2, panelY + panelH / 2 + 20);
-
         ctx.font = '10px "Press Start 2P", monospace';
         ctx.fillStyle = '#ffcc00';
         ctx.fillText('¡Has atrapado al asesino!', cw / 2, panelY + panelH / 2 + 55);
         return;
     }
 
-    // Si ya eligió y fue incorrecto
+    // === INCORRECTO ===
     if (gameState.accusationResult === false) {
         ctx.font = '28px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('❌', cw / 2, panelY + 50);
-
         ctx.font = '14px "Press Start 2P", monospace';
         ctx.fillStyle = '#ff4444';
         ctx.fillText('¡SOSPECHOSO EQUIVOCADO!', cw / 2, panelY + 85);
-
         ctx.font = '11px "Press Start 2P", monospace';
         ctx.fillStyle = '#ffffff';
         wrapText(ctx, 'Revisa las pistas de nuevo y piensa bien... ¿Quién es el verdadero asesino?', cw / 2, panelY + 130, panelW - 60, 20);
-
         ctx.font = '9px "Press Start 2P", monospace';
         ctx.fillStyle = '#aaa';
         ctx.fillText('Presiona ENTER para intentar de nuevo', cw / 2, panelY + panelH - 20);
         return;
     }
 
-    // Ícono
-    ctx.font = '28px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('🔍⚖️', cw / 2, panelY + 40);
-
-    // Título
+    // === TÍTULO ===
     ctx.font = '14px "Press Start 2P", monospace';
     ctx.fillStyle = '#ff4444';
-    ctx.fillText('¡MOMENTO DE ACUSAR!', cw / 2, panelY + 70);
+    ctx.textAlign = 'center';
+    ctx.fillText('¿QUIÉN ES EL ASESINO?', cw / 2, panelY + 30);
 
-    // Contexto
-    ctx.font = '11px "Press Start 2P", monospace';
-    ctx.fillStyle = '#ffffff';
-    wrapText(ctx, 'Has reunido todas las pistas. Estás en la escena del crimen. Basándote en la evidencia... ¿Quién es el ASESINO?', cw / 2, panelY + 100, panelW - 60, 20);
+    ctx.font = '9px "Press Start 2P", monospace';
+    ctx.fillStyle = '#aaa';
+    ctx.fillText('Observa bien los detalles y elige al sospechoso', cw / 2, panelY + 50);
 
-    // Pistas recordatorio
-    ctx.font = '8px "Press Start 2P", monospace';
-    ctx.fillStyle = '#ffcc00';
-    ctx.textAlign = 'left';
-    const reminderY = panelY + 155;
-    const maxClues = Math.min(gameState.cluesFound.length, 3);
-    for (let i = 0; i < maxClues; i++) {
-        const shortClue = gameState.cluesFound[i].substring(0, 60) + '...';
-        ctx.fillText(shortClue, panelX + 25, reminderY + i * 14);
-    }
-    if (gameState.cluesFound.length > 3) {
-        ctx.fillText('... y ' + (gameState.cluesFound.length - 3) + ' pistas más', panelX + 25, reminderY + 3 * 14);
-    }
+    // === TARJETAS DE SOSPECHOSOS ===
+    const cardW = Math.floor((panelW - 60) / 3);
+    const cardH = panelH - 120;
+    const cardTopY = panelY + 65;
+    const cardGap = 15;
+    const startX = panelX + (panelW - (cardW * 3 + cardGap * 2)) / 2;
 
-    // Opciones de sospechosos
+    // Guardar posiciones para click detection
+    gameState._accusationCards = [];
+
     const suspects = [
-        { label: 'A', name: 'Carlos Méndez', desc: 'Vecino con antecedentes' },
-        { label: 'B', name: 'Pedro Ramírez', desc: 'Ex socio de negocios' },
-        { label: 'C', name: 'María López', desc: 'Compañera de trabajo' }
+        { label: 'A', name: 'Carlos Méndez', role: 'Vigilante nocturno' },
+        { label: 'B', name: 'Pedro Ramírez', role: 'Empresario' },
+        { label: 'C', name: 'Luis Torres', role: 'Vigilante nocturno' }
     ];
 
-    const optionStartY = panelY + 225;
-    const optionH = 48;
-    ctx.textAlign = 'left';
-
-    for (let i = 0; i < suspects.length; i++) {
+    for (let i = 0; i < 3; i++) {
         const s = suspects[i];
-        const oy = optionStartY + i * optionH;
+        const cx = startX + i * (cardW + cardGap);
+        gameState._accusationCards.push({ x: cx, y: cardTopY, w: cardW, h: cardH, index: i });
 
-        // Fondo de opción
-        ctx.fillStyle = 'rgba(255, 68, 68, 0.1)';
-        ctx.fillRect(panelX + 20, oy, panelW - 40, optionH - 5);
-        ctx.strokeStyle = '#ff4444';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(panelX + 20, oy, panelW - 40, optionH - 5);
+        const isHover = gameState._accusationHover === i;
 
-        // Tecla
+        // Fondo de tarjeta
+        ctx.fillStyle = isHover ? '#1a1a3e' : '#111122';
+        ctx.fillRect(cx, cardTopY, cardW, cardH);
+        ctx.strokeStyle = isHover ? '#ffcc00' : '#444';
+        ctx.lineWidth = isHover ? 3 : 2;
+        ctx.strokeRect(cx, cardTopY, cardW, cardH);
+
+        // Tecla (esquina superior)
         ctx.fillStyle = '#ff4444';
         ctx.font = 'bold 14px "Press Start 2P", monospace';
-        ctx.fillText(s.label + ')', panelX + 35, oy + 17);
+        ctx.textAlign = 'center';
+        ctx.fillText(s.label, cx + cardW / 2, cardTopY + 20);
+
+        // === DIBUJAR PERSONAJE ===
+        const charX = cx + cardW / 2;
+        const charCY = cardTopY + cardH * 0.38;
+        const charScale = Math.min(cardW / 130, 1.1);
+
+        ctx.save();
+        ctx.translate(charX, charCY);
+        ctx.scale(charScale, charScale);
+
+        if (i === 0) drawSuspectCarlos(ctx);
+        else if (i === 1) drawSuspectPedro(ctx);
+        else drawSuspectLuis(ctx);
+
+        ctx.restore();
 
         // Nombre
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '11px "Press Start 2P", monospace';
-        ctx.fillText(s.name, panelX + 80, oy + 17);
-
-        // Descripción
-        ctx.fillStyle = '#888';
         ctx.font = '8px "Press Start 2P", monospace';
-        ctx.fillText(s.desc, panelX + 80, oy + 32);
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.name, cx + cardW / 2, cardTopY + cardH - 35);
+
+        // Rol
+        ctx.font = '7px "Press Start 2P", monospace';
+        ctx.fillStyle = '#888';
+        ctx.fillText(s.role, cx + cardW / 2, cardTopY + cardH - 20);
     }
 
     // Instrucción
-    ctx.font = '9px "Press Start 2P", monospace';
+    ctx.font = '8px "Press Start 2P", monospace';
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.textAlign = 'center';
-    ctx.fillText('Presiona 1-3 o A-C para acusar', cw / 2, panelY + panelH - 10);
+    ctx.fillText('Click o presiona 1-3 / A-C para acusar', cw / 2, panelY + panelH - 8);
+}
+
+// === CARLOS MÉNDEZ: Ropa oscura, guantes NEGROS, trofeo, soga ===
+function drawSuspectCarlos(c) {
+    // Cuerpo (ropa oscura de vigilante nocturno)
+    c.fillStyle = '#1a1a2a';
+    c.fillRect(-18, 10, 36, 50);
+    // Cuello
+    c.fillStyle = '#2a2a3a';
+    c.fillRect(-8, 5, 16, 10);
+    // Cabeza
+    c.fillStyle = '#d4a574';
+    c.beginPath(); c.arc(0, -10, 18, 0, Math.PI * 2); c.fill();
+    // Cabello oscuro
+    c.fillStyle = '#1a1a1a';
+    c.beginPath(); c.arc(0, -16, 18, Math.PI, 0); c.fill();
+    c.fillRect(-18, -18, 36, 6);
+    // Ojos
+    c.fillStyle = '#222';
+    c.beginPath(); c.arc(-6, -10, 2.5, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(6, -10, 2.5, 0, Math.PI * 2); c.fill();
+    // Cejas gruesas
+    c.fillStyle = '#111';
+    c.fillRect(-10, -16, 8, 2);
+    c.fillRect(2, -16, 8, 2);
+    // Boca seria
+    c.strokeStyle = '#8a6a4a';
+    c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(-4, -2); c.lineTo(4, -2); c.stroke();
+
+    // === GUANTES NEGROS ===
+    c.fillStyle = '#111111';
+    c.beginPath(); c.arc(-24, 40, 7, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(24, 45, 7, 0, Math.PI * 2); c.fill();
+    // Brazos
+    c.fillStyle = '#1a1a2a';
+    c.fillRect(-22, 15, 8, 28);
+    c.fillRect(14, 15, 8, 32);
+
+    // === TROFEO (objeto pesado) ===
+    c.fillStyle = '#b8960c';
+    c.beginPath();
+    c.moveTo(-32, 22); c.lineTo(-30, 35); c.lineTo(-18, 35); c.lineTo(-16, 22);
+    c.closePath(); c.fill();
+    c.fillRect(-26, 35, 4, 6);
+    c.fillRect(-30, 41, 12, 3);
+    c.fillStyle = '#d4b020';
+    c.fillRect(-29, 25, 3, 6);
+
+    // === SOGA en cinturón ===
+    c.strokeStyle = '#8b7355';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(10, 55);
+    c.quadraticCurveTo(22, 58, 20, 68);
+    c.quadraticCurveTo(18, 78, 12, 75);
+    c.quadraticCurveTo(8, 72, 14, 65);
+    c.stroke();
+    // Cinturón
+    c.fillStyle = '#333';
+    c.fillRect(-18, 52, 36, 5);
+    c.fillStyle = '#888';
+    c.fillRect(-3, 52, 6, 5);
+
+    // Piernas
+    c.fillStyle = '#111';
+    c.fillRect(-14, 57, 12, 35);
+    c.fillRect(2, 57, 12, 35);
+    // Botas
+    c.fillStyle = '#222';
+    c.fillRect(-16, 88, 16, 7);
+    c.fillRect(0, 88, 16, 7);
+}
+
+// === PEDRO RAMÍREZ: Traje claro, guantes BLANCOS, cuchillo, maletín ===
+function drawSuspectPedro(c) {
+    // Cuerpo (traje formal gris claro)
+    c.fillStyle = '#8899aa';
+    c.fillRect(-18, 10, 36, 50);
+    // Solapas
+    c.fillStyle = '#7788aa';
+    c.beginPath();
+    c.moveTo(-18, 10); c.lineTo(-5, 10); c.lineTo(-10, 30); c.lineTo(-18, 28);
+    c.closePath(); c.fill();
+    c.beginPath();
+    c.moveTo(18, 10); c.lineTo(5, 10); c.lineTo(10, 30); c.lineTo(18, 28);
+    c.closePath(); c.fill();
+    // Corbata
+    c.fillStyle = '#cc3333';
+    c.beginPath();
+    c.moveTo(-3, 10); c.lineTo(3, 10); c.lineTo(1, 38); c.lineTo(-1, 38);
+    c.closePath(); c.fill();
+    // Cuello camisa
+    c.fillStyle = '#ffffff';
+    c.fillRect(-6, 5, 12, 8);
+    // Cabeza
+    c.fillStyle = '#e0b88a';
+    c.beginPath(); c.arc(0, -10, 18, 0, Math.PI * 2); c.fill();
+    // Cabello castaño peinado
+    c.fillStyle = '#5a3a1a';
+    c.beginPath(); c.arc(0, -16, 18, Math.PI, 0); c.fill();
+    c.fillRect(-18, -20, 36, 8);
+    c.fillStyle = '#4a2a0a';
+    c.fillRect(-5, -28, 2, 12);
+    // Ojos
+    c.fillStyle = '#335';
+    c.beginPath(); c.arc(-6, -10, 2.5, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(6, -10, 2.5, 0, Math.PI * 2); c.fill();
+    // Sonrisa falsa
+    c.strokeStyle = '#a07a5a';
+    c.lineWidth = 1.5;
+    c.beginPath(); c.arc(0, -4, 5, 0, Math.PI); c.stroke();
+
+    // === GUANTES BLANCOS ===
+    c.fillStyle = '#f0f0f0';
+    c.beginPath(); c.arc(-26, 42, 7, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(24, 48, 7, 0, Math.PI * 2); c.fill();
+    // Brazos
+    c.fillStyle = '#8899aa';
+    c.fillRect(-22, 15, 8, 30);
+    c.fillRect(14, 15, 8, 36);
+
+    // === CUCHILLO ===
+    c.fillStyle = '#ccd8e0';
+    c.beginPath();
+    c.moveTo(-26, 32); c.lineTo(-24, 18); c.lineTo(-28, 18);
+    c.closePath(); c.fill();
+    c.fillStyle = '#5a3a1a';
+    c.fillRect(-28, 32, 5, 10);
+    c.fillStyle = 'rgba(255,255,255,0.4)';
+    c.fillRect(-26, 20, 1, 10);
+
+    // === MALETÍN ===
+    c.fillStyle = '#3a2a1a';
+    c.fillRect(14, 50, 22, 16);
+    c.fillStyle = '#b8960c';
+    c.fillRect(22, 50, 6, 2);
+    c.strokeStyle = '#3a2a1a';
+    c.lineWidth = 2;
+    c.beginPath(); c.arc(25, 49, 4, Math.PI, 0); c.stroke();
+
+    // Cinturón
+    c.fillStyle = '#4a3a2a';
+    c.fillRect(-18, 52, 36, 4);
+    c.fillStyle = '#b8960c';
+    c.fillRect(-3, 52, 6, 4);
+
+    // Piernas
+    c.fillStyle = '#667788';
+    c.fillRect(-14, 56, 12, 35);
+    c.fillRect(2, 56, 12, 35);
+    // Zapatos
+    c.fillStyle = '#2a2a2a';
+    c.fillRect(-16, 88, 16, 6);
+    c.fillRect(0, 88, 16, 6);
+}
+
+// === LUIS TORRES: Misma ropa oscura que Carlos, pero SIN guantes, SIN soga, SIN objeto pesado ===
+function drawSuspectLuis(c) {
+    // Cuerpo (ropa oscura de vigilante nocturno - IGUAL que Carlos)
+    c.fillStyle = '#1a1a2a';
+    c.fillRect(-18, 10, 36, 50);
+    // Cuello
+    c.fillStyle = '#2a2a3a';
+    c.fillRect(-8, 5, 16, 10);
+    // Cabeza
+    c.fillStyle = '#c89a64';
+    c.beginPath(); c.arc(0, -10, 18, 0, Math.PI * 2); c.fill();
+    // Cabello corto castaño claro
+    c.fillStyle = '#5a4020';
+    c.beginPath(); c.arc(0, -16, 18, Math.PI, 0); c.fill();
+    c.fillRect(-18, -18, 36, 6);
+    // Ojos
+    c.fillStyle = '#2a4a2a';
+    c.beginPath(); c.arc(-6, -10, 2.5, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(6, -10, 2.5, 0, Math.PI * 2); c.fill();
+    // Cejas normales
+    c.fillStyle = '#3a2a10';
+    c.fillRect(-10, -16, 7, 1.5);
+    c.fillRect(3, -16, 7, 1.5);
+    // Boca neutra
+    c.strokeStyle = '#8a6a4a';
+    c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(-3, -2); c.lineTo(3, -2); c.stroke();
+
+    // === MANOS DESCUBIERTAS (SIN guantes - piel visible) ===
+    c.fillStyle = '#c89a64';
+    c.beginPath(); c.arc(-24, 42, 7, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(24, 45, 7, 0, Math.PI * 2); c.fill();
+    // Dedos visibles
+    c.fillStyle = '#b88a54';
+    c.fillRect(-28, 40, 3, 5);
+    c.fillRect(-20, 40, 3, 5);
+    c.fillRect(21, 43, 3, 5);
+    c.fillRect(27, 43, 3, 5);
+    // Brazos (misma ropa oscura)
+    c.fillStyle = '#1a1a2a';
+    c.fillRect(-22, 15, 8, 28);
+    c.fillRect(14, 15, 8, 32);
+
+    // === SIN TROFEO, SIN SOGA — pero tiene un CUCHILLO CON SANGRE ===
+    // Hoja del cuchillo
+    c.fillStyle = '#ccd8e0';
+    c.beginPath();
+    c.moveTo(-24, 30); c.lineTo(-22, 16); c.lineTo(-26, 16);
+    c.closePath(); c.fill();
+    // Sangre en la hoja
+    c.fillStyle = '#aa0000';
+    c.fillRect(-25, 18, 3, 5);
+    c.fillStyle = '#cc2222';
+    c.beginPath(); c.arc(-23, 20, 2, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#880000';
+    c.fillRect(-24, 24, 2, 4);
+    // Gotas de sangre cayendo
+    c.fillStyle = '#cc1111';
+    c.beginPath(); c.arc(-25, 30, 1.5, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(-23, 33, 1, 0, Math.PI * 2); c.fill();
+    // Mango del cuchillo
+    c.fillStyle = '#3a2a1a';
+    c.fillRect(-26, 30, 5, 10);
+
+    // Cinturón (igual pero SIN soga colgando)
+    c.fillStyle = '#333';
+    c.fillRect(-18, 52, 36, 5);
+    c.fillStyle = '#888';
+    c.fillRect(-3, 52, 6, 5);
+
+    // Piernas (misma ropa oscura)
+    c.fillStyle = '#111';
+    c.fillRect(-14, 57, 12, 35);
+    c.fillRect(2, 57, 12, 35);
+    // Botas
+    c.fillStyle = '#222';
+    c.fillRect(-16, 88, 16, 7);
+    c.fillRect(0, 88, 16, 7);
 }
 
 function selectRiddleOption(optionIndex) {
