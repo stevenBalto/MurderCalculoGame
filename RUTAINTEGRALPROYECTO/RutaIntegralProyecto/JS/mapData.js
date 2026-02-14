@@ -478,7 +478,7 @@ const npcs = [
         id: 'npc1',
         name: 'Don Roberto',            // o el nombre que quieras
         type: NPC_TYPES.WITNESS,        // da igual, por ahora
-       x: 10, y: 10,          // cerca de APARTAMENTOS (podés ajustar)
+        x: 10, y: 10,          // cerca de APARTAMENTOS (podés ajustar)
         sprite: 'male',
         color: '#4a9eff',
         dialogues: [
@@ -503,7 +503,7 @@ window.npcs = npcs;
 
 // ============================
 // ACERTIJOS / RIDDLES - Pistas de la víctima
-// El juego tiene 6 acertijos repartidos por la ciudad.
+// El juego tiene 6 dds repartidos por la ciudad.
 // Cada uno da una pista para atrapar al asesino.
 // Duración objetivo: ~30 minutos total.
 // POR AHORA: la respuesta correcta siempre es "a".
@@ -600,6 +600,24 @@ const RIDDLES = [
         solved: false,
         clueText: '🔍 Pista 2: La nota final dice: “Carlos Méndez me citó aquí… tengo miedo".'
     }
+    ,
+    {
+        id: 7,
+        interior: 'apartamentos',
+        x: 9,
+        y: 7,
+        location: 'APARTAMENTOS (PISTA FINAL)',
+        question: 'Encuentras una ecuación escrita: 2x + 5 = 17. ¿Cuál es el valor de x?',
+        options: [
+            { label: 'a', text: 'x = 6' },
+            { label: 'b', text: 'x = 7' },
+            { label: 'c', text: 'x = 8' },
+            { label: 'd', text: 'x = 5' }
+        ],
+        solved: false,
+        clueText: '🔍 PISTA FINAL: ¡Encuentras guantes NEGROS escondidos! Si Carlos usa guantes negros, Pedro usa blancos y Luis no tiene guantes. Ya sé quien es el asesino!'
+    }
+
 ];
 
 
@@ -641,7 +659,10 @@ function enableRiddleById(id) {
             mapCollision[r.y][r.x] = COLLISION_TYPES.WALKABLE;
         }
     }
-    
+    if (!gameState.enabledRiddleIds.includes(id)) {
+        gameState.enabledRiddleIds.push(id);
+    }
+
     // 👇 AGREGAR ESTA LÍNEA
     gameState.enabledRiddleIds.push(id);
 }
@@ -695,6 +716,18 @@ const gameState = {
     showingDialogue: false,
     dialogueTitle: '',
     dialogueBody: '',
+    // Sistema de intentos (AGREGAR ESTAS LÍNEAS)
+    attempts: 0,
+    maxAttempts: 2,
+    failedSuspects: [],
+    finalClueUnlocked: false,
+    needsNpcGuidance: false,
+    lastWrongSuspect: '',
+    suspects: [
+        { id: 'carlos', name: 'CARLOS MENDEZ', isKiller: true },
+        { id: 'pedro', name: 'PEDRO RAMIREZ', isKiller: false },
+        { id: 'luis', name: 'LUIS TORRES', isKiller: false }
+    ]
 
 };
 
@@ -1031,7 +1064,7 @@ function generateApartamentosInterior() {
         objects[8][x] = T.WALL_DIV;
         collision[8][x] = COLLISION_TYPES.SOLID;
     }
-// Puertas de apartamentos en el pasillo (ahora son WALKABLE para poder entrar)
+    // Puertas de apartamentos en el pasillo (ahora son WALKABLE para poder entrar)
     objects[5][4] = T.DOOR_APT;  // APT 1
     collision[5][4] = COLLISION_TYPES.WALKABLE;  // ← CAMBIO AQUÍ
     objects[5][11] = T.DOOR_APT; // APT 2
@@ -1041,7 +1074,7 @@ function generateApartamentosInterior() {
     objects[8][11] = T.DOOR_APT; // APT 4
     collision[8][11] = COLLISION_TYPES.WALKABLE; // ← CAMBIO AQUÍ
 
-    
+
 
     // === ESCALERAS (centro del pasillo) ===
     objects[6][7] = T.STAIRS;
@@ -1220,6 +1253,8 @@ function generateApartamentosInterior() {
     objects[0][7] = T.WINDOW;
     objects[0][10] = T.WINDOW;
     objects[0][13] = T.WINDOW;
+
+    collision[7][9] = COLLISION_TYPES.INTERACTIVE;
 
     interiorMaps['apartamentos'] = {
         width: W,
@@ -1640,7 +1675,7 @@ function generateHospitalInterior() {
     objects[8][13] = T.BENCH_INT;
     collision[8][13] = COLLISION_TYPES.SOLID;
 
-  
+
 
     // Gabinete de emergencia
     objects[7][14] = T.MEDICINE_CABINET;
@@ -1862,7 +1897,7 @@ function generateBibliotecaInterior() {
     collision[2][12] = COLLISION_TYPES.SOLID;
     objects[3][12] = T.BOOKSHELF_TALL;
     collision[3][12] = COLLISION_TYPES.SOLID;
-    
+
 
     objects[3][4] = T.BOOKSHELF;
     collision[3][4] = COLLISION_TYPES.SOLID;

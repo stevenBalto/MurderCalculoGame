@@ -241,6 +241,51 @@ function handleInteraction(x, y) {
     return false;
 }
 function handleNpcInteraction(npc) {
+
+    // === FLUJO DESPUÉS DE FALLAR ACUSACIÓN ===
+
+    if (gameState.needsNpcGuidance === 'finalclue') {
+        showDialogue(
+            'DON ROBERTO',
+            `Acusó a ${gameState.lastWrongSuspect}, pero no es el asesino.\n\n` +
+            'Detective, hay algo que pasamos por alto.\n' +
+            'Vaya a los APARTAMENTOS otra vez.\n\n' +
+            'Hay una PISTA FINAL que revelará la verdad.\n' +
+            'Busque con cuidado... es su última oportunidad.'
+        );
+
+        gameState.needsNpcGuidance = false;
+        gameState.finalClueUnlocked = true;
+
+        // HABILITAR INMEDIATAMENTE, SIN IFs
+        gameState.enabledRiddleIds.push(7);
+
+        console.log('✅ Riddle 7 habilitado AHORA');
+        console.log('enabledRiddleIds:', gameState.enabledRiddleIds);
+
+        return;
+    }
+
+    if (gameState.needsNpcGuidance === 'finalclue') {
+        showDialogue(
+            'DON ROBERTO',
+            `Acusó a ${gameState.lastWrongSuspect}, pero no es el asesino.\n\n` +
+            'Detective, hay algo que pasamos por alto.\n' +
+            'Vaya a los APARTAMENTOS otra vez.\n\n' +
+            'Hay una PISTA FINAL que revelará la verdad.\n' +
+            'Busque con cuidado... es su última oportunidad.'
+        );
+
+        gameState.needsNpcGuidance = false;
+
+        if (!gameState.finalClueUnlocked) {
+            gameState.finalClueUnlocked = true;
+            enableRiddleById(7);
+        }
+        return;
+    }
+
+    // === AQUÍ CONTINÚA TU CÓDIGO ORIGINAL DE handleNpcInteraction ===
     // ETAPA 0: Primera vez - Manda a la biblioteca
     if (gameState.caseStage === 0) {
         showDialogue(
@@ -267,7 +312,7 @@ function handleNpcInteraction(npc) {
         );
         return;
     }
-    
+
     // ETAPA 2: Resolvió biblioteca → va al HOSPITAL
     if (gameState.caseStage === 1 && RIDDLES.find(r => r.id === 3).solved) {
         showDialogue(
@@ -277,7 +322,7 @@ function handleNpcInteraction(npc) {
             'Ahora vaya al HOSPITAL.\n' +
             'Allí encontrará algo crucial.'
         );
-        
+
         enableRiddleById(6); // hospital
         gameState.caseStage = 2;
         return;
@@ -301,7 +346,7 @@ function handleNpcInteraction(npc) {
             'Ahora necesita revisar los archivos en la COMISARÍA.\n' +
             'Busque con cuidado.'
         );
-        
+
         enableRiddleById(1); // comisaría
         gameState.caseStage = 3;
         return;
@@ -325,7 +370,7 @@ function handleNpcInteraction(npc) {
             'Ahora vaya a los APARTAMENTOS.\n' +
             'Hay algo que debe encontrar ahí.'
         );
-        
+
         enableRiddleById(4); // apartamentos
         gameState.caseStage = 4;
         return;
@@ -349,7 +394,7 @@ function handleNpcInteraction(npc) {
             'Ahora vaya al RESTAURANTE.\n' +
             'La última pista lo espera ahí.'
         );
-        
+
         enableRiddleById(5); // restaurante
         gameState.caseStage = 5;
         return;
@@ -373,7 +418,7 @@ function handleNpcInteraction(npc) {
             'Ahora tiene todas las pistas.\n' +
             'Vaya a la CASA EMBRUJADA y resuelva el caso final.'
         );
-        
+
         enableRiddleById(2); // casa sospechosa
         gameState.caseStage = 6;
         return;
@@ -447,6 +492,14 @@ function enterInterior(interiorId) {
         mapFloor[y] = [...interior.floor[y]];
         mapObjects[y] = [...interior.objects[y]];
         mapCollision[y] = [...interior.collision[y]];
+    }
+
+     for (const riddle of RIDDLES) {
+        if (riddle.solved && riddle.interior === interiorId) {
+            if (mapObjects[riddle.y] && mapObjects[riddle.y][riddle.x] === T.EVIDENCE) {
+                mapObjects[riddle.y][riddle.x] = T.EMPTY;
+            }
+        }
     }
 
     // Cambiar dimensiones
@@ -564,7 +617,7 @@ window.addEventListener('keydown', (e) => {
         return;
     }
     e.preventDefault();
-    
+
     // ✨ Interacción con E (hablar / entrar / usar) - MODIFICADO
     if (e.key === 'e' || e.key === 'E') {
         // Primero, intentar interactuar con NPC cercano (sin importar dirección)
@@ -572,14 +625,14 @@ window.addEventListener('keydown', (e) => {
             e.preventDefault();
             return;
         }
-        
+
         // Si no hay NPC cerca, usar la interacción direccional normal (puertas, etc.)
         const front = getFrontTile(player.x, player.y, player.direction);
         handleInteraction(front.x, front.y);
         e.preventDefault();
         return;
     }
-    
+
     if (gameState.showingDialogue) {
         if (e.key === 'Enter' || e.key === 'b' || e.key === 'B') {
             closeDialogue();
@@ -601,28 +654,28 @@ function getFrontTile(px, py, dir) {
 // ✨ NUEVA FUNCIÓN - Buscar e interactuar con NPC cercano
 function tryInteractWithNearbyNPC() {
     if (!window.npcs) return false;
-    
+
     const px = Math.round(player.x);
     const py = Math.round(player.y);
-    
+
     // Buscar NPC en las 8 casillas adyacentes + la casilla actual
     const searchOffsets = [
-        {dx: 0, dy: 0},   // misma casilla
-        {dx: -1, dy: 0},  // izquierda
-        {dx: 1, dy: 0},   // derecha
-        {dx: 0, dy: -1},  // arriba
-        {dx: 0, dy: 1},   // abajo
-        {dx: -1, dy: -1}, // diagonal superior izquierda
-        {dx: 1, dy: -1},  // diagonal superior derecha
-        {dx: -1, dy: 1},  // diagonal inferior izquierda
-        {dx: 1, dy: 1}    // diagonal inferior derecha
+        { dx: 0, dy: 0 },   // misma casilla
+        { dx: -1, dy: 0 },  // izquierda
+        { dx: 1, dy: 0 },   // derecha
+        { dx: 0, dy: -1 },  // arriba
+        { dx: 0, dy: 1 },   // abajo
+        { dx: -1, dy: -1 }, // diagonal superior izquierda
+        { dx: 1, dy: -1 },  // diagonal superior derecha
+        { dx: -1, dy: 1 },  // diagonal inferior izquierda
+        { dx: 1, dy: 1 }    // diagonal inferior derecha
     ];
-    
+
     // Buscar NPC en cada posición
     for (const offset of searchOffsets) {
         const checkX = px + offset.dx;
         const checkY = py + offset.dy;
-        
+
         for (const npc of window.npcs) {
             if (npc.x === checkX && npc.y === checkY) {
                 // ¡Encontramos un NPC cercano!
@@ -631,7 +684,7 @@ function tryInteractWithNearbyNPC() {
             }
         }
     }
-    
+
     return false; // No hay NPCs cerca
 }
 
@@ -767,9 +820,17 @@ function checkForRiddle(px, py) {
             riddle.x === px &&
             riddle.y === py
         ) {
+            console.log('🎯 RIDDLE DETECTADO:', riddle.id, riddle.location);
             gameState.activeRiddle = riddle;
             break;
         }
+    }
+
+    // DEBUG: Ver qué está pasando cuando pisas (9,7)
+    if (px === 9 && py === 7 && gameState.isIndoors && gameState.currentInterior === 'apartamentos') {
+        console.log('📍 Estás en posición (9,7) en apartamentos');
+        console.log('🔍 enabledRiddleIds:', gameState.enabledRiddleIds);
+        console.log('🎮 RIDDLE 7:', RIDDLES.find(r => r.id === 7));
     }
 }
 
@@ -803,26 +864,48 @@ function checkForAccusation(px, py) {
 function selectAccusationOption(optionIndex) {
     if (!gameState.showingAccusation) return;
     if (gameState.accusationResult !== null) return;
-    // Carlos Méndez es la opción correcta (índice 0, opción A)
-    if (optionIndex === 0) {
+
+    // Obtener sospechosos disponibles (excluyendo los ya fallados)
+    const availableSuspects = gameState.suspects.filter(s => !gameState.failedSuspects.includes(s.id));
+    const selectedSuspect = availableSuspects[optionIndex];
+
+    if (!selectedSuspect) return;
+
+    // Verificar si es el asesino
+    if (selectedSuspect.isKiller) {
+        // ¡CORRECTO!
         gameState.accusationResult = true;
-        // Breve pausa para mostrar "CORRECTO" y luego animación de victoria
         setTimeout(() => {
             gameState.showingAccusation = false;
             startVictoryAnimation();
         }, 1200);
     } else {
+        // INCORRECTO
         gameState.accusationResult = false;
+        gameState.attempts++;
+        gameState.failedSuspects.push(selectedSuspect.id);
+        gameState.lastWrongSuspect = selectedSuspect.name;
+
+        if (gameState.attempts >= gameState.maxAttempts) {
+            gameState.needsNpcGuidance = 'gameover';
+        } else {
+            gameState.needsNpcGuidance = 'finalclue';
+        }
     }
 }
 
 function closeAccusationResult() {
     if (gameState.accusationResult === true) {
-        // Ya se maneja en selectAccusationOption con setTimeout
         return;
     } else {
-        // Incorrecto: volver a mostrar la acusación
+        // INCORRECTO: Salir de la escena del crimen
+        gameState.showingAccusation = false;
         gameState.accusationResult = null;
+        exitInterior();
+
+        // Mensaje de que debe ir con el NPC
+        interactionMessage = '❌ Acusación incorrecta. Ve con DON ROBERTO';
+        interactionTimer = 240;
     }
 }
 
@@ -1061,23 +1144,25 @@ function drawAccusationUI() {
     ctx.fillStyle = '#aaa';
     ctx.fillText('Observa bien los detalles y elige al sospechoso', cw / 2, panelY + 50);
 
-    // === TARJETAS DE SOSPECHOSOS ===
-    const cardW = Math.floor((panelW - 60) / 3);
-    const cardH = panelH - 120;
-    const cardTopY = panelY + 65;
-    const cardGap = 15;
-    const startX = panelX + (panelW - (cardW * 3 + cardGap * 2)) / 2;
-
-    // Guardar posiciones para click detection
-    gameState._accusationCards = [];
-
-    const suspects = [
-        { label: 'A', name: 'Carlos Méndez', role: 'Vigilante nocturno' },
-        { label: 'B', name: 'Pedro Ramírez', role: 'Empresario' },
-        { label: 'C', name: 'Luis Torres', role: 'Vigilante nocturno' }
+    // Filtrar sospechosos disponibles
+    const allSuspects = [
+        { id: 'carlos', label: 'A', name: 'Carlos Méndez', role: 'Vigilante nocturno', drawFunc: 0 },
+        { id: 'pedro', label: 'B', name: 'Pedro Ramírez', role: 'Empresario', drawFunc: 1 },
+        { id: 'luis', label: 'C', name: 'Luis Torres', role: 'Vigilante nocturno', drawFunc: 2 }
     ];
 
-    for (let i = 0; i < 3; i++) {
+    const suspects = allSuspects.filter(s => !gameState.failedSuspects.includes(s.id));
+    const numSuspects = suspects.length;
+
+    const cardW = Math.floor((panelW - 60) / numSuspects);
+    const cardH = panelH - 120;
+    const cardTopY = panelY + 65;
+    const cardGap = numSuspects === 3 ? 15 : 25;
+    const startX = panelX + (panelW - (cardW * numSuspects + cardGap * (numSuspects - 1))) / 2;
+
+    gameState._accusationCards = [];
+
+    for (let i = 0; i < numSuspects; i++) {
         const s = suspects[i];
         const cx = startX + i * (cardW + cardGap);
         gameState._accusationCards.push({ x: cx, y: cardTopY, w: cardW, h: cardH, index: i });
@@ -1106,8 +1191,8 @@ function drawAccusationUI() {
         ctx.translate(charX, charCY);
         ctx.scale(charScale, charScale);
 
-        if (i === 0) drawSuspectCarlos(ctx);
-        else if (i === 1) drawSuspectPedro(ctx);
+        if (s.drawFunc === 0) drawSuspectCarlos(ctx);
+        else if (s.drawFunc === 1) drawSuspectPedro(ctx);
         else drawSuspectLuis(ctx);
 
         ctx.restore();
@@ -3513,7 +3598,7 @@ function render() {
         drawNPCs();
     }
 
-      // 🔴 SI HAY DIÁLOGO, SOLO DIBUJA ESO
+    // 🔴 SI HAY DIÁLOGO, SOLO DIBUJA ESO
     if (gameState.showingDialogue) {
         drawDialogueUI();
         return;
@@ -4126,6 +4211,40 @@ function drawGameCompleteUI() {
 
     ctx.fillStyle = 'rgba(0,0,0,0.93)';
     ctx.fillRect(0, 0, cw, ch);
+
+    // Verificar si perdió
+    if (gameState.attempts >= gameState.maxAttempts && gameState.failedSuspects.length > 0) {
+        // PANTALLA DE DERROTA
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('💀', cw / 2, ch / 2 - 80);
+
+        ctx.font = '18px "Press Start 2P", monospace';
+        ctx.fillStyle = '#ff4444';
+        ctx.fillText('CASO CERRADO', cw / 2, ch / 2 - 30);
+
+        ctx.font = '11px "Press Start 2P", monospace';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('Has agotado tus intentos', cw / 2, ch / 2 + 10);
+
+        ctx.fillStyle = '#ff8888';
+        ctx.fillText('El asesino escapó mientras', cw / 2, ch / 2 + 35);
+        ctx.fillText('perseguías pistas falsas...', cw / 2, ch / 2 + 55);
+
+        const totalSec = Math.floor(gameState.timer / 60);
+        const mins = Math.floor(totalSec / 60);
+        const secs = totalSec % 60;
+        ctx.font = '10px "Press Start 2P", monospace';
+        ctx.fillStyle = '#888';
+        ctx.fillText(`Tiempo: ${mins}m ${secs.toString().padStart(2, '0')}s`, cw / 2, ch / 2 + 90);
+
+        ctx.font = '9px "Press Start 2P", monospace';
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fillText('Presiona ENTER para volver al menú', cw / 2, ch / 2 + 130);
+        return;
+    }
+
+    // AQUÍ CONTINÚA TU CÓDIGO ORIGINAL DE VICTORIA
 
     ctx.font = '28px Arial';
     ctx.textAlign = 'center';
